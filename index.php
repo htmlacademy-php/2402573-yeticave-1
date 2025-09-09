@@ -49,10 +49,9 @@ function formatThePrice ($num)
     $rounded_num = ceil($num);
     if($rounded_num < 1000) {
         return "{$rounded_num} ₽";
-    } else {
-        $formatted_num = number_format($rounded_num, 0, '', ' ');
     }
-    return "{$formatted_num} ₽";
+
+    return number_format($rounded_num, 0, '', ' ') . ' ₽';
 }
 
 ?>
