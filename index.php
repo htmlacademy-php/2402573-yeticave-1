@@ -1,6 +1,38 @@
 <?php
 require_once('./helpers.php');
 
+$conn = mysqli_connect('localhost', 'wsluser', '3D4e85t1', 'yeticave');
+
+if (!$conn) {
+     print("Ошибка подключения: " . mysqli_connect_error());
+}
+
+mysqli_set_charset($conn, 'utf8');
+
+$lotsSql = 'SELECT l.title, l.starting_price, l.image, l.end_date, c.title AS category FROM lots l
+JOIN categories c ON l.category_id = c.id
+WHERE l.end_date > NOW()
+ORDER BY l.created_at DESC;';
+
+$result = mysqli_query($conn, $lotsSql);
+
+if ($result) {
+    $newLots = mysqli_fetch_all($result, MYSQLI_ASSOC);
+} else {
+    $error = mysqli_error($conn);
+	print("Ошибка MySQL: " . $error);
+}
+
+$categoriesSql = 'SELECT * FROM categories;';
+$res = mysqli_query($conn, $categoriesSql);
+
+if ($res) {
+    $categoriesFromDB = mysqli_fetch_all($res, MYSQLI_ASSOC);
+} else {
+    $error = mysqli_error($conn);
+	print("Ошибка MySQL: " . $error);
+}
+
 $categories = ['Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное'];
 
 $lots = [
@@ -50,8 +82,8 @@ $lots = [
 
 
 $pageContent = include_template('main.php', [
-    'categories' => $categories,
-    'lots' => $lots,
+    'categories' => $categoriesFromDB,
+    'lots' => $newLots,
 ]);
 
 
@@ -59,7 +91,7 @@ $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Главная',
     'userName' => 'Анастасия',
-    'categories' => $categories,
+    'categories' => $categoriesFromDB,
 ]);
 
 print $pageLayout;
