@@ -13,19 +13,25 @@ $lotsSql = 'SELECT l.title, l.starting_price, l.image, l.end_date, c.title AS ca
 JOIN categories c ON l.category_id = c.id
 WHERE l.end_date > NOW()
 ORDER BY l.created_at DESC;';
+
 $result = mysqli_query($conn, $lotsSql);
 
-if (!$result) {
-	$error = mysqli_error($conn);
+if ($result) {
+    $newLots = mysqli_fetch_all($result, MYSQLI_ASSOC);
+} else {
+    $error = mysqli_error($conn);
 	print("Ошибка MySQL: " . $error);
 }
 
-$newLots = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
 $categoriesSql = 'SELECT * FROM categories;';
 $res = mysqli_query($conn, $categoriesSql);
-$categoriesFromDB = mysqli_fetch_all($res, MYSQLI_ASSOC);
 
+if ($res) {
+    $categoriesFromDB = mysqli_fetch_all($res, MYSQLI_ASSOC);
+} else {
+    $error = mysqli_error($conn);
+	print("Ошибка MySQL: " . $error);
+}
 
 $categories = ['Доски и лыжи', 'Крепления', 'Ботинки', 'Одежда', 'Инструменты', 'Разное'];
 
