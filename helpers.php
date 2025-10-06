@@ -15,6 +15,14 @@
  * @return bool true при совпадении с форматом 'ГГГГ-ММ-ДД', иначе false
  */
 
+function is_date_valid(string $date): bool
+{
+    $format_to_check = 'Y-m-d';
+    $dateTimeObj = date_create_from_format($format_to_check, $date);
+
+    return $dateTimeObj !== false && array_sum(date_get_last_errors()) === 0;
+}
+
 function formatThePrice($num)
 {
     $roundedNum = ceil($num);
@@ -44,14 +52,57 @@ function getDtRange($date)
     return $time;
 }
 
-function is_date_valid(string $date): bool
+function validateCategory($id, $allowedList)
 {
-    $format_to_check = 'Y-m-d';
-    $dateTimeObj = date_create_from_format($format_to_check, $date);
 
-    return $dateTimeObj !== false && array_sum(date_get_last_errors()) === 0;
+    if ($id === '' || $id === null) {
+        return 'Выберите категорию';
+    }
+
+    if (!in_array($id, $allowedList)) {
+        return 'Указана несуществующая категория';
+    }
+
+    return null;
 }
 
+function validatePrice($value)
+{
+    if (!is_numeric($value) || $value <= 0) {
+        return 'Начальная цена должна быть выше нуля';
+    }
+    return null;
+}
+
+function validateStep($value)
+{
+    if (!ctype_digit($value)) {
+        return 'Значение должно быть числовым';
+    }
+    $intValue = (int) $value;
+    if ($intValue <= 0) {
+        return 'Ставка должна быть выше нуля';
+    }
+
+    return null;
+}
+
+
+function validateDate($value)
+{
+    if (!is_date_valid($value)) {
+        return 'Неверный формат даты';
+    }
+
+    $date = date_create($value);
+    $cur_date = date_create('today');
+
+    if ($date <= $cur_date) {
+        return 'Дата должна быть больше текущей';
+    }
+
+    return null;
+}
 /**
  * Создает подготовленное выражение на основе готового SQL запроса и переданных данных
  *
