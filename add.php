@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'image/jpeg' => 'jpg',
             'image/png'  => 'png',
         ];
-        var_dump($fileType);
+
         if (!in_array($fileType, $permittedFileTypes)) {
             $errors['file'] = 'Загрузите картинку в формате PNG/JPG';
         } else {
