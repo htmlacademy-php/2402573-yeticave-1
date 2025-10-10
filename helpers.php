@@ -23,7 +23,14 @@ function is_date_valid(string $date): bool
     return $dateTimeObj !== false && array_sum(date_get_last_errors()) === 0;
 }
 
-function formatThePrice($num)
+/**
+ *
+ * @param int $num Число для форматирования
+ *
+ * @return string Отформатированная сумма
+ */
+
+function formatThePrice(int $num): string
 {
     $roundedNum = ceil($num);
     if ($roundedNum < 1000) {
@@ -33,7 +40,13 @@ function formatThePrice($num)
     return number_format($roundedNum, 0, '', ' ') . ' ₽';
 }
 
-function getDtRange($date)
+/**
+ * @param string $date Дата в виде строки
+ *
+ * @return array<int,int> Массив [часы, минуты] до даты
+ */
+
+function getDtRange(string $date): array
 {
 
     $currentDate = time();
@@ -52,21 +65,35 @@ function getDtRange($date)
     return $time;
 }
 
-function validateCategory($id, $allowedList)
+/**
+ * @param int $id ID категории
+ * @param int[] $allowedList Список разрешенных id категорий
+ *
+ * @return string|null Строка с текстом ошибки или null, если ошибки нет
+ */
+
+function validateCategory(int $id, array $allowedList): ?string
 {
 
-    if ($id === '' || $id === null) {
-        return 'Выберите категорию';
+    if ($id === 0) {
+        return "Выберите категорию";
     }
 
-    if (!in_array($id, $allowedList)) {
+    $allowedListFlipped = array_flip($allowedList);
+    if (!isset($id, $allowedListFlipped[$id])) {
         return 'Указана несуществующая категория';
     }
 
     return null;
 }
 
-function validatePrice($value)
+/**
+ * @param string $value Цена в виде строки
+ *
+ * @return string Текст ошибки или null
+ */
+
+function validatePrice(string $value): ?string
 {
     if (!is_numeric($value) || $value <= 0) {
         return 'Начальная цена должна быть выше нуля';
@@ -74,7 +101,13 @@ function validatePrice($value)
     return null;
 }
 
-function validateStep($value)
+/**
+ * @param string $value Числовое целое значение
+ *
+ * @return string Текст ошибки или null
+ */
+
+function validateStep(string $value): ?string
 {
     if (!ctype_digit($value)) {
         return 'Значение должно быть числовым';
@@ -88,7 +121,13 @@ function validateStep($value)
 }
 
 
-function validateDate($value)
+/**
+ * @param string $value Дата в виде строки
+ *
+ * @return string Текст ошибки или null
+ */
+
+function validateDate(string $value): ?string
 {
     if (!is_date_valid($value)) {
         return 'Неверный формат даты';
