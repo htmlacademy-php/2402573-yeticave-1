@@ -11,6 +11,7 @@ $categoriesIds = array_column($categoriesFromDB, 'id');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $lot = $_POST;
+    $categoryId = isset($lot['category']) ? (int) $lot['category'] : 0;
 
     $requiredFields = ['lot-name', 'category', 'message', 'lot-rate', 'lot-date', 'lot-step'];
     $errors = [];
