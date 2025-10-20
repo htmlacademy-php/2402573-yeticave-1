@@ -23,6 +23,17 @@
                     </div>
                 </div>
             </div>
+             <?php if (isset($_SESSION['user'])): ?>
+                <form class="lot-item__form" action="add_bet.php" method="post" autocomplete="off">
+                    <p class="lot-item__form-item form__item">
+                        <label for="cost">Ваша ставка</label>
+                        <input id="cost" type="number" name="cost" placeholder="<?= htmlspecialchars($lot['starting_price'] + $lot['bet_step']) ?>">
+                        <span class="form__error"><?= $errors['cost'] ?? '' ?></span>
+                    </p>
+                    <button type="submit" class="button">Сделать ставку</button>
+                </form>
+            <?php endif; ?>
         </div>
     </div>
+
 </section>

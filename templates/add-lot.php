@@ -59,3 +59,4 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
     <?php endif; ?>
     <button type="submit" class="button">Добавить лот</button>
 </form>
+

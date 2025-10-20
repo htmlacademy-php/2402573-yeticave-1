@@ -1,5 +1,12 @@
 <?php
 
+session_start();
+
+if (!isset($_SESSION['user'])) {
+    http_response_code(403);
+    die('Доступ запрещён. Только для зарегистрированных пользователей.');
+}
+
 $db = require('./config.php');
 require_once('./helpers.php');
 require_once('./db.php');
@@ -76,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $sql = 'INSERT INTO lots (title, description, created_at, image, starting_price,
             end_date, bidding_step, author_id, category_id)
-            VALUES (?, ?, NOW(), ?, ?, ?, ?, 1, ?)';
+            VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)';
 
         $data = [
             $lot['lot-name'],
@@ -85,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $lot['lot-rate'],
             $lot['lot-date'],
             $lot['lot-step'],
+            $_SESSION['user']['id'],
             $lot['category']
         ];
 
@@ -107,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Главная',
-    'userName' => 'Анастасия',
+    'userName' => $_SESSION['user']['name'] ?? '',
     'categories' => $categoriesFromDB,
 ]);
 
