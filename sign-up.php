@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = db_get_prepare_stmt($conn, $sql, [$form['email'], $form['name'], $password, $form['message']]);
             $insertRes = mysqli_stmt_execute($stmt);
             if ($insertRes) {
-                header('Location: pages/login.html');
+                header('Location: login.php');
                 exit();
             } else {
                 $errors['general'] = 'Ошибка регистрации';

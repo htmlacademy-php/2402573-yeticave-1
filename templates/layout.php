@@ -1,17 +1,19 @@
 <?php
+session_start();
 
-$isAuth = rand(0, 1);
-
+$isAuth = isset($_SESSION['user']);
+$userName = $isAuth ? htmlspecialchars($_SESSION['user']['name']) : '';
 ?>
 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title><?= $title ?></title>
+    <title><?= htmlspecialchars($title ?? '') ?></title>
     <link href="../css/normalize.min.css" rel="stylesheet">
     <link href="../css/style.css" rel="stylesheet">
 </head>
+
 <body>
 <div class="page-wrapper">
 
@@ -28,11 +30,11 @@ $isAuth = rand(0, 1);
         <a class="main-header__add-lot button" href="add.php">Добавить лот</a>
 
         <nav class="user-menu">
-          <?php if ($isAuth == 1): ?>
+          <?php if ($isAuth): ?>
             <div class="user-menu__logged">
               <p><?= $userName ?></p>
               <a class="user-menu__bets" href="pages/my-bets.html">Мои ставки</a>
-              <a class="user-menu__logout" href="#">Выход</a>
+              <a class="user-menu__logout" href="logout.php">Выход</a>
             </div>
             <?php else: ?>
             <ul class="user-menu__list">
@@ -40,7 +42,7 @@ $isAuth = rand(0, 1);
                 <a href="sign-up.php">Регистрация</a>
               </li>
               <li class="user-menu__item">
-                <a href="#">Вход</a>
+                <a href="login.php">Вход</a>
               </li>
             </ul>
           <?php endif; ?>
