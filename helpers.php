@@ -142,6 +142,57 @@ function validateDate(string $value): ?string
 
     return null;
 }
+
+/**
+ * Проверяет заполненность обязательных полей формы
+ * @param str[]  $form  Поля формы в виде массива строк
+ * @param str[] $fields Массив обязательных полей
+ * @return array возвращает массив с незаполненными полями
+ */
+
+function validateRequiredFields(array $form, array $fields): array
+{
+    $errors = [];
+    foreach ($fields as $field) {
+        if (empty(trim($form[$field] ?? ''))) {
+            $errors[$field] = 'Не заполнено поле ' . $field;
+        }
+    }
+    return $errors;
+}
+
+function renderLoginPage(mysqli $conn, array $errors = [], array $form = [])
+{
+    $categoriesFromDB = getCategories($conn);
+    $pageContent = include_template('login.php', [
+        'errors' => $errors,
+        'form' => $form
+    ]);
+    $layoutContent = include_template('layout.php', [
+        'pageContent' => $pageContent,
+        'categories' => $categoriesFromDB,
+        'title' => 'Вход на сайт'
+    ]);
+    print($layoutContent);
+    exit();
+}
+
+function renderSignUpPage(mysqli $conn, array $errors = [], array $form = [])
+{
+    $categoriesFromDB = getCategories($conn);
+    $pageContent = include_template('sign-up.php', [
+        'errors' => $errors,
+        'form' => $form
+    ]);
+    $layoutContent = include_template('layout.php', [
+        'pageContent' => $pageContent,
+        'categories' => $categoriesFromDB,
+        'title' => 'Регистрация'
+    ]);
+    print($layoutContent);
+    exit();
+}
+
 /**
  * Создает подготовленное выражение на основе готового SQL запроса и переданных данных
  *
