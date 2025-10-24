@@ -49,3 +49,6 @@ CREATE TABLE bids (
 CREATE INDEX idx_lots_title ON lots(title);
 
 CREATE INDEX idx_lots_end_date ON lots(end_date);
+
+CREATE FULLTEXT INDEX lot_ft_search ON lots(title, description);
+

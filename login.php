@@ -7,63 +7,50 @@ require_once('./db.php');
 
 $conn = connectDB($db['db']);
 
-$categoriesFromDB = getCategories($conn);
-$form = [];
-$errors = [];
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $form = $_POST;
-
-    $requiredFields = ['email', 'password'];
-
-    foreach ($form as $key => $value) {
-        if (empty(trim($value))) {
-            $errors[$key] = 'Не заполнено поле ' . $key;
-        }
-    }
-
-    $email = mysqli_real_escape_string($conn, $form['email']);
-    $sql = "SELECT * FROM users WHERE email = '$email'";
-    $res = mysqli_query($conn, $sql);
-
-    $user = $res ? mysqli_fetch_array($res, MYSQLI_ASSOC) : null;
-
-    if (!count($errors)) {
-        $email = mysqli_real_escape_string($conn, $form['email']);
-        $sql = "SELECT * FROM users WHERE email = '$email'";
-        $res = mysqli_query($conn, $sql);
-        $user = $res ? mysqli_fetch_array($res, MYSQLI_ASSOC) : null;
-
-        if ($user) {
-            if (password_verify($form['password'], $user['password'])) {
-                $_SESSION['user'] = $user;
-                header("Location: /index.php");
-                exit();
-            } else {
-                $errors['password'] = 'Вы ввели неверный пароль';
-            }
-        } else {
-            $errors['email'] = 'Такой пользователь не найден';
-        }
-    }
-} else {
-    $page_content = include_template('login.php', []);
-
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    // если пользователь уже зашел, загружаем главную страницу
     if (isset($_SESSION['user'])) {
         header("Location: /index.php");
         exit();
     }
+    // если нет, то загружаем форму входа на сайт
+    renderLoginPage($conn);
 }
 
-$pageContent = include_template('login.php', [
-    'errors' => $errors,
-    'form' => $form ?? []
-]);
+$form = $_POST;
+$requiredFields = ['email', 'password'];
+// проверка заполненности полей
+$errors = validateRequiredFields($form, $requiredFields);
 
-$layoutContent = include_template('layout.php', [
-    'pageContent'    => $pageContent,
-    'categories' => $categoriesFromDB,
-    'title'      => 'Вход на сайт'
-]);
+// если поле почты не пустое и формат неверен - сообщение об ошибке
+if (!isset($errors['email']) && !filter_var($form['email'], FILTER_VALIDATE_EMAIL)) {
+    $errors['email'] = 'Введите корректный e-mail';
+}
 
-print($layoutContent);
+// если есть ошибки, грузим форму с сообщениями о них
+if (!empty($errors)) {
+    renderLoginPage($conn, $errors, $form);
+}
+
+$user = getUserByEmail($form['email'], $conn);
+
+if (!$user) {
+    $errors['email'] = 'Такой пользователь не найден';
+} elseif (!password_verify($form['password'], $user['password'])) {
+    $errors['password'] = 'Вы ввели неверный пароль';
+}
+
+// Если есть ошибки после попытки входа, выводим их с формой
+if (!empty($errors)) {
+    renderLoginPage($conn, $errors, $form);
+}
+
+// Успешный вход и редирект на главную 
+$_SESSION['user'] = [
+    'id' => $user['id'],
+    'name' => $user['name'],
+    'email' => $user['email']
+];
+
+header("Location: /index.php");
+exit();
