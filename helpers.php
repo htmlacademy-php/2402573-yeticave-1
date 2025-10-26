@@ -315,3 +315,66 @@ function include_template($name, array $data = [])
 
     return $result;
 }
+
+function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bidsHistory = []): void
+{
+    $categories = getCategories($conn);
+
+    // текущая цена для отображения
+    $currentPrice = getLotCurrentPrice($conn, $lot['id']);
+
+    $pageContent = include_template('lot.php', [
+        'lot' => $lot,
+        'errors' => $errors,
+        'bidsHistory' => $bidsHistory,
+        'currentPrice' => $currentPrice
+    ]);
+
+    $pageLayout = include_template('layout.php', [
+        'pageContent' => $pageContent,
+        'title' => $lot['lot_title'],
+        'categories' => $categories,
+        'userName' => $_SESSION['user']['name'] ?? ''
+    ]);
+
+    print $pageLayout;
+    exit();
+}
+
+function countTimePosted(string $date) : string
+{
+    $timeDiff = time() - strtotime($date);
+
+    // seconds
+    if($timeDiff < 60) {
+        return $timeDiff . ' ' . get_noun_plural_form($timeDiff, 'секунда', 'секунды', 'секунд') . ' назад';
+    }
+
+    //minutes
+    $minutesAgo = floor($timeDiff / 60);
+    if($minutesAgo < 60) {
+        return $minutesAgo . ' ' . get_noun_plural_form($minutesAgo, 'минута', 'минуты', 'минут') . ' назад';
+    }
+
+    $hoursAgo = floor($minutesAgo / 60);
+    if($hoursAgo < 60) {
+        return $hoursAgo . ' ' . get_noun_plural_form($hoursAgo, 'час', 'часа', 'часов') . ' назад';
+    }
+
+    $daysAgo = floor($hoursAgo / 24);
+    if($daysAgo === 1) {
+        return 'Вчера в ' . date('H:i', strtotime($date));
+    }
+
+    return date('d.m.y в H:i', strtotime($date));
+}
+
+function isBidExpired(array $bids): bool {
+    return strtotime($bids['end_date']) < time();
+}
+
+function isBidWon(array $bids, int $userId): bool {
+    return isBidExpired($bids) && $bids['winner_id'] === $userId;
+}
+
+
