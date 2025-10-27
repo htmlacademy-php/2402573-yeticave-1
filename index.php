@@ -7,6 +7,7 @@ $userName = $_SESSION['user']['name'] ?? '';
 $db = require('./config.php');
 require_once('./helpers.php');
 require_once('./db.php');
+require_once('getWinner.php');
 
 $conn = connectDB($db['db']);
 

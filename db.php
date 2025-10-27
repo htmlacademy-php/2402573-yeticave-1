@@ -203,3 +203,41 @@ function getLotCurrentPrice(mysqli $conn, int $lotId): int
     $lot = getLotById($conn, $lotId);
     return (int)$lot['starting_price'];
 }
+
+function getCurrentNonWinningLots(mysqli $conn) : array|false
+{
+    $sql = 'SELECT * FROM lots
+            WHERE winner_id IS NULL
+            AND end_date <= NOW();';
+
+    $result = mysqli_query($conn, $sql);
+
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getLotsLastBid(mysqli $conn, int $lotId) : array|false
+{
+    $sql = 'SELECT b.*, u.email, u.name FROM bids b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.lot_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1;';
+    $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
+    if (!mysqli_stmt_execute($stmt)) {
+        return false;
+    }
+    $result = mysqli_stmt_get_result($stmt);
+    if (!$result) {
+        return false;
+    }
+    $row = mysqli_fetch_assoc($result);
+    return $row ?: false;
+}
+
+function saveTheWinner(mysqli $conn, int $winner_id, int $lotId): bool
+{
+    $sql = 'UPDATE lots SET winner_id = ?
+            WHERE id = ?;';
+    $stmt = db_get_prepare_stmt($conn, $sql, [$winner_id, $lotId]);
+    return mysqli_stmt_execute($stmt);
+}
