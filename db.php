@@ -351,3 +351,38 @@ function saveTheWinner(mysqli $conn, int $winnerId, int $lotId): bool
     $stmt = db_get_prepare_stmt($conn, $sql, [$winnerId, $lotId]);
     return mysqli_stmt_execute($stmt);
 }
+
+/**
+ * Добавляет новый лот в БД.
+ *
+ * @param mysqli $conn Подключение MySQLi.
+ * @param array $form Данные формы (ключи: 'lot-name','message','path','lot-rate','lot-date','lot-step','category').
+ * @param int $authorId ID автора (пользователя).
+ * @return int|false ID вставленного лота или false при ошибке.
+ */
+function addNewLot(mysqli $conn, int $authorId, array $form) : int|false
+{
+    $sql = 'INSERT INTO lots (title, description, created_at, image, starting_price,
+            end_date, bidding_step, author_id, category_id)
+            VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)';
+
+        $data = [
+            $form['lot-name'] ?? '',
+            $form['message'] ?? '',
+            $form['path'] ?? '',
+            $form['lot-rate'] ?? 0,
+            $form['lot-date'] ?? '',
+            $form['lot-step'] ?? 0,
+            $authorId,
+            $form['category'] ?? 0
+        ];
+
+        $stmt = db_get_prepare_stmt($conn, $sql, $data);
+
+        if (!mysqli_stmt_execute($stmt)) {
+            return false;
+        }
+
+        $newLotId = (int) mysqli_insert_id($conn);
+        return $newLotId > 0 ? $newLotId : false;
+}

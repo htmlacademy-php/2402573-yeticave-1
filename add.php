@@ -16,107 +16,90 @@ $conn = connectDB($db['db']);
 $categoriesFromDB = getCategories($conn);
 $categoriesIds = array_column($categoriesFromDB, 'id');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $lot = $_POST;
-    $categoryId = isset($lot['category']) ? (int) $lot['category'] : 0;
-
-    $requiredFields = ['lot-name', 'category', 'message', 'lot-rate', 'lot-date', 'lot-step'];
-    $errors = [];
-
-    $rules = [
-        'lot-rate' => function ($value) {
-            return validatePrice($value);
-        },
-        'lot-step' => function ($value) {
-            return validateStep($value);
-        },
-        'lot-date' => function ($value) {
-            return validateDate($value);
-        },
-        'category' => function ($value) use ($categoriesIds) {
-            return validateCategory($value, $categoriesIds);
-        },
-    ];
-
-    foreach ($lot as $key => $value) {
-        if (in_array($key, $requiredFields) && empty($value)) {
-            $errors[$key] = "Поле обязательно для заполнения";
-        }
-        if (isset($rules[$key])) {
-            $rule = $rules[$key];
-            $errors[$key] = $rule($value);
-        }
-    }
-
-    $errors = array_filter($errors);
-
-    if (empty($_FILES['image']['tmp_name'])) {
-        $errors['file'] = 'Вы не загрузили файл';
-    } else {
-        $tmpName = $_FILES['image']['tmp_name'];
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $fileType = finfo_file($finfo, $tmpName);
-
-        $permittedFileTypes = ['image/jpg', 'image/jpeg', 'image/png'];
-        $fileExtensions = [
-            'image/jpg'  => 'jpg',
-            'image/jpeg' => 'jpg',
-            'image/png'  => 'png',
-        ];
-
-        if (!in_array($fileType, $permittedFileTypes)) {
-            $errors['file'] = 'Загрузите картинку в формате PNG/JPG';
-        } else {
-            $extension = $fileExtensions[$fileType];
-            $filename = uniqid() . '.' . $extension;
-            move_uploaded_file($tmpName, 'uploads/' . $filename);
-            $lot['path'] = $filename;
-        }
-    }
-
-    if (count($errors)) {
-        $pageContent = include_template('add-lot.php', [
-            'lot' => $lot,
-            'categories' => $categoriesFromDB,
-            'errors' => $errors
-        ]);
-    } else {
-        $sql = 'INSERT INTO lots (title, description, created_at, image, starting_price,
-            end_date, bidding_step, author_id, category_id)
-            VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)';
-
-        $data = [
-            $lot['lot-name'],
-            $lot['message'],
-            $lot['path'],
-            $lot['lot-rate'],
-            $lot['lot-date'],
-            $lot['lot-step'],
-            $_SESSION['user']['id'],
-            $lot['category']
-        ];
-
-        $stmt = db_get_prepare_stmt($conn, $sql, $data);
-        $res = mysqli_stmt_execute($stmt);
-
-        if ($res) {
-            $lotId = mysqli_insert_id($conn);
-            header('Location: lot.php?id=' . $lotId);
-            exit;
-        }
-    }
-} else {
-    // первый заход на страницу, форма не отправлена
-    $pageContent = include_template('add-lot.php', [
-        'categories' => $categoriesFromDB
-    ]);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    renderAddLotForm($categoriesFromDB, [], [], $_SESSION['user']['name'] ?? '');
 }
 
-$pageLayout = include_template('layout.php', [
-    'pageContent' => $pageContent,
-    'title' => 'Главная',
-    'userName' => $_SESSION['user']['name'] ?? '',
-    'categories' => $categoriesFromDB,
-]);
+$lotForm = $_POST;
 
-print $pageLayout;
+$requiredFields = [
+    'lot-name' => 'Название лота',
+    'category' => 'Категория',
+    'message' => 'Описание',
+    'lot-rate' => 'Начальная цена',
+    'lot-date' => 'Дата окончания',
+    'lot-step' => 'Шаг ставки'
+];
+
+$errors = validateRequiredFields($lotForm, $requiredFields);
+
+$validators = [
+    'lot-rate' => 'validatePrice',
+    'lot-step' => 'validateStep',
+    'lot-date' => 'validateDate',
+    'category' => function($value) use ($categoriesIds) {
+        return validateCategory((int)$value, $categoriesIds);
+    }
+];
+
+$errors = [];
+
+foreach ($requiredFields as $field => $label) {
+    $value = $lotForm[$field] ?? '';
+
+    if (trim($value) === '') {
+        $errors[$field] = "Поле $label обязательно для заполнения";
+        continue;
+    }
+
+    if (isset($validators[$field])) {
+        $validator = $validators[$field];
+
+        $err = is_string($validator) ? $validator($value) : $validator($value);
+        if ($err) {
+            $errors[$field] = $err;
+        }
+    }
+}
+
+$errors = array_filter($errors);
+
+if (empty($_FILES['image']['tmp_name'])) {
+    $errors['file'] = 'Вы не загрузили файл';
+} else {
+    $tmpName = $_FILES['image']['tmp_name'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $fileType = finfo_file($finfo, $tmpName);
+    finfo_close($finfo);
+
+    $allowedTypes = ['image/jpg', 'image/jpeg', 'image/png'];
+    $extensions = [
+        'image/jpg' => 'jpg',
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png'
+    ];
+
+    if (!in_array($fileType, $allowedTypes, true)) {
+        $errors['file'] = 'Загрузите картинку в формате PNG/JPG';
+    } else {
+        $ext = $extensions[$fileType];
+        $filename = uniqid('', true) . '.' . $ext;
+        move_uploaded_file($tmpName, 'uploads/' . $filename);
+        $lotForm['path'] = $filename;
+    }
+}
+
+if (!empty($errors)) {
+    renderAddLotForm($categoriesFromDB, $lotForm, $errors, $_SESSION['user']['name'] ?? '');
+}
+
+$authorId = (int)($_SESSION['user']['id'] ?? 0);
+$newLotId = addNewLot($conn, $authorId, $lotForm);
+
+if ($newLotId === false) {
+    $errors['db'] = 'Ошибка при сохранении лота. Попробуйте позже.';
+    renderAddLotForm($categoriesFromDB, $lotForm, $errors, $_SESSION['user']['name'] ?? '');
+}
+
+header('Location: lot.php?id=' . $newLotId);
+exit;

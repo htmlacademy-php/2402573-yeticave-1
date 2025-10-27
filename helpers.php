@@ -435,3 +435,34 @@ function isBidExpired(array $bids): bool
 {
     return strtotime($bids['end_date']) < time();
 }
+
+/**
+ *  Отрисовывает страницу с формой добавления нового лота
+ *
+ * @param array $categories
+ * @param array $lot
+ * @param array $errors
+ * @param string $userName
+ *
+ *
+ */
+
+function renderAddLotForm(array $categories, array $lot = [], array $errors = [], string $userName = '') : void
+{
+    $pageContent = include_template('add-lot.php', [
+        'lot' => $lot,
+        'categories' => $categories,
+        'errors' => $errors
+    ]);
+
+    $pageLayout = include_template('layout.php', [
+        'pageContent' => $pageContent,
+        'title' => 'Добавить лот',
+        'userName' => $userName,
+        'categories' => $categories
+    ]);
+
+    print $pageLayout;
+    exit();
+}
+
