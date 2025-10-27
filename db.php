@@ -151,22 +151,6 @@ function getUserBids(mysqli $conn, int $userId): array
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
-function getMaxBidForLot(mysqli $conn, int $lotId): array|false
-{
-    $sql = 'SELECT b.user_id, b.amount, b.created_at
-            FROM bids b
-            WHERE b.lot_id = ?
-            ORDER BY b.amount DESC, b.created_at DESC
-            LIMIT 1';
-
-    $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-
-    return mysqli_fetch_assoc($result);
-}
-
-
 function getBidsByLot(mysqli $conn, int $lotId): array
 {
     $sql = "SELECT b.amount, b.created_at, u.name AS user_name

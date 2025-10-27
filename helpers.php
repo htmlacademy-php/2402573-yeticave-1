@@ -341,40 +341,35 @@ function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bids
     exit();
 }
 
-function countTimePosted(string $date) : string
+function countTimePosted(string $date): string
 {
     $timeDiff = time() - strtotime($date);
 
     // seconds
-    if($timeDiff < 60) {
+    if ($timeDiff < 60) {
         return $timeDiff . ' ' . get_noun_plural_form($timeDiff, 'секунда', 'секунды', 'секунд') . ' назад';
     }
 
     //minutes
     $minutesAgo = floor($timeDiff / 60);
-    if($minutesAgo < 60) {
+    if ($minutesAgo < 60) {
         return $minutesAgo . ' ' . get_noun_plural_form($minutesAgo, 'минута', 'минуты', 'минут') . ' назад';
     }
 
-    $hoursAgo = floor($minutesAgo / 60);
-    if($hoursAgo < 60) {
+    $hoursAgo = floor($timeDiff / 3600);
+    if ($hoursAgo < 24) {
         return $hoursAgo . ' ' . get_noun_plural_form($hoursAgo, 'час', 'часа', 'часов') . ' назад';
     }
 
-    $daysAgo = floor($hoursAgo / 24);
-    if($daysAgo === 1) {
+    $yesterday = date('Y-m-d', strtotime('-1 day'));
+    if (date('Y-m-d', strtotime($date)) === $yesterday) {
         return 'Вчера в ' . date('H:i', strtotime($date));
     }
 
     return date('d.m.y в H:i', strtotime($date));
 }
 
-function isBidExpired(array $bids): bool {
+function isBidExpired(array $bids): bool
+{
     return strtotime($bids['end_date']) < time();
 }
-
-function isBidWon(array $bids, int $userId): bool {
-    return isBidExpired($bids) && $bids['winner_id'] === $userId;
-}
-
-
