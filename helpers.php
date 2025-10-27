@@ -24,6 +24,8 @@ function is_date_valid(string $date): bool
 }
 
 /**
+ * Выводит цену в отделяя тысячные пробелом
+ * и добавляя символ валюты '₽'
  *
  * @param int $num Число для форматирования
  *
@@ -41,9 +43,11 @@ function formatThePrice(int $num): string
 }
 
 /**
+ *   Вычисляет оставшееся время до указанной даты
+ *
  * @param string $date Дата в виде строки
  *
- * @return array<int,int> Массив [часы, минуты] до даты
+ * @return array<int,int> Массив [часы, минуты]
  */
 
 function getDtRange(string $date): array
@@ -66,8 +70,11 @@ function getDtRange(string $date): array
 }
 
 /**
+ *
+ * Проверяет существование категории и входит ли она в разрешенный список
+ *
  * @param int $id ID категории
- * @param int[] $allowedList Список разрешенных id категорий
+ * @param int[] $allowedList Массив разрешенных id категорий
  *
  * @return string|null Строка с текстом ошибки или null, если ошибки нет
  */
@@ -88,12 +95,14 @@ function validateCategory(int $id, array $allowedList): ?string
 }
 
 /**
- * @param string $value Цена в виде строки
+ * Проверка положительного значения поля цены
  *
- * @return string Текст ошибки или null
+ * @param string|int $value Цена для проверки
+ *
+ * @return string|null Текст ошибки или null
  */
 
-function validatePrice(string $value): ?string
+function validatePrice(string|int $value): ?string
 {
     if (!is_numeric($value) || $value <= 0) {
         return 'Начальная цена должна быть выше нуля';
@@ -102,12 +111,14 @@ function validatePrice(string $value): ?string
 }
 
 /**
- * @param string $value Числовое целое значение
+ * Проверяет что шаг ставки положительный и является числом
  *
- * @return string Текст ошибки или null
+ * @param string|int $value Числовое целое значение
+ *
+ * @return string|null Текст ошибки или null
  */
 
-function validateStep(string $value): ?string
+function validateStep(string|int $value): ?string
 {
     if (!ctype_digit($value)) {
         return 'Значение должно быть числовым';
@@ -120,11 +131,12 @@ function validateStep(string $value): ?string
     return null;
 }
 
-
 /**
- * @param string $value Дата в виде строки
+ * Проверяет формат даты и что она больше текущей
  *
- * @return string Текст ошибки или null
+ * @param string $value Дата в виде 'Y-m-d'
+ *
+ * @return string|null Текст ошибки или null
  */
 
 function validateDate(string $value): ?string
@@ -145,8 +157,9 @@ function validateDate(string $value): ?string
 
 /**
  * Проверяет заполненность обязательных полей формы
- * @param str[]  $form  Поля формы в виде массива строк
- * @param str[] $fields Массив обязательных полей
+ * @param array  $form  Поля формы в виде массива строк
+ * @param array $fields Массив обязательных полей
+ *
  * @return array возвращает массив с незаполненными полями
  */
 
@@ -161,7 +174,18 @@ function validateRequiredFields(array $form, array $fields): array
     return $errors;
 }
 
-function renderLoginPage(mysqli $conn, array $errors = [], array $form = [])
+/**
+ * Отрисовывает страницу с формой входа на сайт в соответствии
+ * с переданными параметрами
+ *
+ * @param mysqli $conn соединение с БД
+ * @param array $errors массив с ошибками, по умолчанию пустой
+ * @param array $form массив полей формы
+ *
+ * @return void
+*/
+
+function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): void
 {
     $categoriesFromDB = getCategories($conn);
     $pageContent = include_template('login.php', [
@@ -177,7 +201,17 @@ function renderLoginPage(mysqli $conn, array $errors = [], array $form = [])
     exit();
 }
 
-function renderSignUpPage(mysqli $conn, array $errors = [], array $form = [])
+/**
+ * Отрисовывает страницу с формой регистрации
+ *
+ * @param mysqli $conn соединение с БД
+ * @param array $errors массив с ошибками, по умолчанию пустой
+ * @param array $form массив полей формы
+ *
+ * @return void
+*/
+
+function renderSignUpPage(mysqli $conn, array $errors = [], array $form = []): void
 {
     $categoriesFromDB = getCategories($conn);
     $pageContent = include_template('sign-up.php', [
@@ -202,6 +236,7 @@ function renderSignUpPage(mysqli $conn, array $errors = [], array $form = [])
  *
  * @return mysqli_stmt Подготовленное выражение
  */
+
 function db_get_prepare_stmt($link, $sql, $data = [])
 {
     $stmt = mysqli_prepare($link, $sql);
@@ -296,6 +331,7 @@ function get_noun_plural_form(int $number, string $one, string $two, string $man
  * Подключает шаблон, передает туда данные и возвращает итоговый HTML контент
  * @param string $name Путь к файлу шаблона относительно папки templates
  * @param array $data Ассоциативный массив с данными для шаблона
+ *
  * @return string Итоговый HTML
  */
 function include_template($name, array $data = [])
@@ -315,6 +351,16 @@ function include_template($name, array $data = [])
 
     return $result;
 }
+
+/**
+ * Отрисовывает страницу с формой для введения своей ставки
+ * @param mysqli $conn соединение с БД
+ * @param array $errors массив с ошибками, по умолчанию пустой
+ * @param array $lot массив с лотами
+ * @param array $bidsHistory история ставок
+ *
+ * @return void
+ */
 
 function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bidsHistory = []): void
 {
@@ -340,6 +386,14 @@ function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bids
     print $pageLayout;
     exit();
 }
+
+/**
+ * Возвращает строку, описывающую, сколько времени прошло с указанной даты
+ *
+ * @param string $date Дата в формате, распознаваемом strtotime()
+ *
+ * @return string Человекочитаемый формат времени, напр. "5 минут назад", "Вчера в 11:36" или "25.10.25 в 23:26"
+*/
 
 function countTimePosted(string $date): string
 {
@@ -368,6 +422,14 @@ function countTimePosted(string $date): string
 
     return date('d.m.y в H:i', strtotime($date));
 }
+
+/**
+ * Определяет истекла ли дата окончания торгов
+ *
+ * @param array $bids Массив, в котором есть ключ 'end_date'
+ *
+ * @return bool true, если дата меньше текущей
+*/
 
 function isBidExpired(array $bids): bool
 {
