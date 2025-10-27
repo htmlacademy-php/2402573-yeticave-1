@@ -1,3 +1,7 @@
+<?php
+$classInvalid = !empty($errors) ? ' form--invalid' : '';
+?>
+
 <section class="lot-item container">
     <a href="lot.php?id=<?= $lot['id'] ?>">
         <h2><?= htmlspecialchars($lot['lot_title']) ?></h2>
@@ -19,15 +23,20 @@
                 <div class="lot-item__cost-state">
                     <div class="lot-item__rate">
                         <span class="lot-item__amount">Текущая цена</span>
-                        <span class="lot-item__cost"><?= formatThePrice(htmlspecialchars($lot['starting_price'])) ?></span>
+                        <span class="lot-item__cost"><?= formatThePrice($currentPrice) ?></span>
                     </div>
                 </div>
             </div>
-             <?php if (isset($_SESSION['user'])): ?>
-                <form class="lot-item__form" action="add_bet.php" method="post" autocomplete="off">
-                    <p class="lot-item__form-item form__item">
+            <?php if (isset($_SESSION['user'])): ?>
+                <?php $classForm = !empty($errors) ? ' form--invalid' : ''; ?>
+                <form class="lot-item__form<?= $classForm ?>" action="add-bet.php" method="post" autocomplete="off">
+                    <input type="hidden" name="lot_id" value="<?= htmlspecialchars($lot['id']) ?>">
+                    <?php $classInput = isset($errors['cost']) ? ' form__item--invalid' : ''; ?>
+                    <p class="lot-item__form-item form__item<?= $classInput ?>">
                         <label for="cost">Ваша ставка</label>
-                        <input id="cost" type="number" name="cost" placeholder="<?= htmlspecialchars($lot['starting_price'] + $lot['bet_step']) ?>">
+                        <input id="cost" type="number" name="cost"
+                            placeholder="<?= htmlspecialchars($lot['starting_price'] + $lot['bidding_step']) ?>"
+                            value="<?= htmlspecialchars($costValue ?? $_POST['cost'] ?? '') ?>">
                         <span class="form__error"><?= $errors['cost'] ?? '' ?></span>
                     </p>
                     <button type="submit" class="button">Сделать ставку</button>
@@ -35,5 +44,19 @@
             <?php endif; ?>
         </div>
     </div>
-
+<div class="history">
+    <?php $bidsHistory = $bidsHistory ?? []; ?>
+    <h3>История ставок (<span><?= count($bidsHistory) ?></span>)</h3>
+    <table class="history__list">
+        <?php foreach ($bidsHistory as $bid): ?>
+            <tr class="history__item">
+                <td class="history__name"><?= htmlspecialchars($bid['user_name']) ?></td>
+                <td class="history__price"><?= formatThePrice($bid['amount']) ?></td>
+                <td class="history__time"><?= htmlspecialchars(countTimePosted($bid['created_at'])) ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+</div>
+        </div>
+      </div>
 </section>

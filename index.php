@@ -13,7 +13,8 @@ $conn = connectDB($db['db']);
 $lotsSql = 'SELECT l.id, l.title AS lot_title, l.starting_price, l.image, l.end_date, c.title AS category_title FROM lots l
 JOIN categories c ON l.category_id = c.id
 WHERE l.end_date > NOW()
-ORDER BY l.created_at DESC;';
+ORDER BY l.created_at DESC
+LIMIT 9;';
 
 $result = getQuery($conn, $lotsSql);
 $lots = mysqli_fetch_all($result, MYSQLI_ASSOC);
