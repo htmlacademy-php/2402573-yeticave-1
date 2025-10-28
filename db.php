@@ -6,7 +6,7 @@
  * @param array $config Ассоциативный массив с параметрами БД
  *
  * @return mysqli объект подключения MySQLi
-*/
+ */
 
 function connectDB(array $config): mysqli
 {
@@ -32,7 +32,7 @@ function connectDB(array $config): mysqli
  * @param mysqli $conn объект соединения с БД
  * @param string $sql Строка SQL-запроса
  * @return mysqli_result|false Результат запроса или false при ошибке
-*/
+ */
 
 function getQuery(mysqli $conn, string $sql): mysqli_result|false
 {
@@ -53,7 +53,7 @@ function getQuery(mysqli $conn, string $sql): mysqli_result|false
  * @param mysqli $conn объект соединения с БД
  *
  * @return array Ассоциативный массив категорий
-*/
+ */
 function getCategories(mysqli $conn): array
 {
     $categoriesSql = 'SELECT * FROM categories;';
@@ -62,6 +62,78 @@ function getCategories(mysqli $conn): array
     return mysqli_fetch_all($res, MYSQLI_ASSOC);
 }
 
+/**
+ * Возвращает категорию
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param int $id id категории
+ *
+ * @return array|false Ассоциативный массив
+ *
+ */
+function getCategoriesById(mysqli $conn, int $id): ?array
+{
+    $sql = "SELECT * FROM categories WHERE id = ?";
+    $stmt = db_get_prepare_stmt($conn, $sql, [$id]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($res) ?: null;
+}
+
+/**
+ * Возвращает список лотов в определенной категории
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param int $categoryId id категории
+ * @param int $limit количество лотов на странице
+ * @param int $offset смещение для пагинации
+ *
+ * @return array Ассоциативный массив
+ *
+ */
+function getLotsByCategory(mysqli $conn, int $categoryId, int $limit, int $offset): array
+{
+    $sql = 'SELECT
+                l.id,
+                l.title AS lot_title,
+                l.starting_price,
+                l.image,
+                l.end_date,
+                c.title AS category_title,
+                COUNT(b.id) AS bets_count
+            FROM lots l
+            JOIN categories c ON l.category_id = c.id
+            LEFT JOIN bids b ON b.lot_id = l.id
+            WHERE l.category_id = ? AND l.end_date > NOW()
+            GROUP BY l.id
+            ORDER BY l.created_at DESC
+            LIMIT ? OFFSET ?;';
+
+    $stmt = db_get_prepare_stmt($conn, $sql, [$categoryId, $limit, $offset]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_all($res, MYSQLI_ASSOC);
+}
+
+
+/**
+ * Возвращает количество лотов в одпределенной категории
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param int $categoryId id категории
+ *
+ * @return int количество лотов
+ *
+ */
+function getLotsCountByCategory(mysqli $conn, int $categoryId): int
+{
+    $sql = 'SELECT COUNT(*) AS count FROM lots
+            WHERE category_id = ? AND end_date > NOW();';
+    $stmt = db_get_prepare_stmt($conn, $sql, [$categoryId]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    return mysqli_fetch_assoc($res)['count'];
+}
 
 /**
  * Возвращает лот
@@ -71,7 +143,7 @@ function getCategories(mysqli $conn): array
  *
  * @return array|false Ассоциативный массив
  *
-*/
+ */
 function getLotById(mysqli $conn, $lotId): array|false
 {
     $sql = 'SELECT l.id, l.title AS lot_title, l.starting_price, l.description, l.image, c.title AS category_title, l.end_date, c.symbol_code
@@ -96,7 +168,7 @@ function getLotById(mysqli $conn, $lotId): array|false
  *
  * @return array|null Ассоциативный массив пользователя или null если не найден
  *
-*/
+ */
 function getUserByEmail(string $email, mysqli $conn): ?array
 {
     $sql = 'SELECT * FROM users WHERE email = ?';
@@ -116,7 +188,7 @@ function getUserByEmail(string $email, mysqli $conn): ?array
  *
  * @return bool True, если email существует, иначе false
  *
-*/
+ */
 function isEmailExists(string $email, mysqli $conn): bool
 {
     $sql = 'SELECT id FROM users WHERE email = ?';
@@ -134,7 +206,7 @@ function isEmailExists(string $email, mysqli $conn): bool
  *
  * @return bool True если успешно зарегистрирован, иначе false
  *
-*/
+ */
 function registerUser(array $form, mysqli $conn): bool
 {
     $password = password_hash($form['password'], PASSWORD_DEFAULT);
@@ -156,7 +228,7 @@ function registerUser(array $form, mysqli $conn): bool
  *
  * @return int Возвращает текущую цену с учетом минимального шага ставки
  *
-*/
+ */
 function getCurrentPrice(mysqli $conn, int $lotId): int
 {
     // получаем максимальную ставку из таблицы ставок
@@ -192,7 +264,7 @@ function getCurrentPrice(mysqli $conn, int $lotId): int
  * @param int $bid новая ставка
  *
  * @return bool
-*/
+ */
 function saveBid(mysqli $conn, int $bid, int $lotId, int $userId): bool
 {
     $sql = 'INSERT INTO bids (created_at, amount, user_id, lot_id) VALUES (NOW(), ?, ?, ?)';
@@ -213,7 +285,7 @@ function saveBid(mysqli $conn, int $bid, int $lotId, int $userId): bool
  *
  * @return array Возвращает массив ставок
  *
-*/
+ */
 function getUserBids(mysqli $conn, int $userId): array
 {
     $sql = 'SELECT
@@ -249,7 +321,7 @@ function getUserBids(mysqli $conn, int $userId): array
  *
  * @return array Возвращает массив лотов
  *
-*/
+ */
 function getBidsByLot(mysqli $conn, int $lotId): array
 {
     $sql = "SELECT b.amount, b.created_at, u.name AS user_name
@@ -294,8 +366,8 @@ function getLotCurrentPrice(mysqli $conn, int $lotId): int
  *
  * @return array|false Массив лотов или  false, если подходящих нет
  *
-*/
-function getCurrentNonWinningLots(mysqli $conn) : array|false
+ */
+function getCurrentNonWinningLots(mysqli $conn): array|false
 {
     $sql = 'SELECT * FROM lots
             WHERE winner_id IS NULL
@@ -314,8 +386,8 @@ function getCurrentNonWinningLots(mysqli $conn) : array|false
  *
  * @return array Ассоциативный массив последней ставки или false, если ставок нет
  *
-*/
-function getLotsLastBid(mysqli $conn, int $lotId) : array|false
+ */
+function getLotsLastBid(mysqli $conn, int $lotId): array|false
 {
     $sql = 'SELECT b.*, u.email, u.name FROM bids b
             JOIN users u ON b.user_id = u.id
@@ -343,7 +415,7 @@ function getLotsLastBid(mysqli $conn, int $lotId) : array|false
  *
  * @return bool True, если обновление успешно, иначе false
  *
-*/
+ */
 function saveTheWinner(mysqli $conn, int $winnerId, int $lotId): bool
 {
     $sql = 'UPDATE lots SET winner_id = ?
@@ -360,29 +432,84 @@ function saveTheWinner(mysqli $conn, int $winnerId, int $lotId): bool
  * @param int $authorId ID автора (пользователя).
  * @return int|false ID вставленного лота или false при ошибке.
  */
-function addNewLot(mysqli $conn, int $authorId, array $form) : int|false
+function addNewLot(mysqli $conn, int $authorId, array $form): int|false
 {
     $sql = 'INSERT INTO lots (title, description, created_at, image, starting_price,
             end_date, bidding_step, author_id, category_id)
             VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)';
 
-        $data = [
-            $form['lot-name'] ?? '',
-            $form['message'] ?? '',
-            $form['path'] ?? '',
-            $form['lot-rate'] ?? 0,
-            $form['lot-date'] ?? '',
-            $form['lot-step'] ?? 0,
-            $authorId,
-            $form['category'] ?? 0
-        ];
+    $data = [
+        $form['lot-name'] ?? '',
+        $form['message'] ?? '',
+        $form['path'] ?? '',
+        $form['lot-rate'] ?? 0,
+        $form['lot-date'] ?? '',
+        $form['lot-step'] ?? 0,
+        $authorId,
+        $form['category'] ?? 0
+    ];
 
-        $stmt = db_get_prepare_stmt($conn, $sql, $data);
+    $stmt = db_get_prepare_stmt($conn, $sql, $data);
 
-        if (!mysqli_stmt_execute($stmt)) {
-            return false;
-        }
+    if (!mysqli_stmt_execute($stmt)) {
+        return false;
+    }
 
-        $newLotId = (int) mysqli_insert_id($conn);
-        return $newLotId > 0 ? $newLotId : false;
+    $newLotId = (int) mysqli_insert_id($conn);
+    return $newLotId > 0 ? $newLotId : false;
+}
+
+/**
+ * Возвращает список лотов по поисковому запросу
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param string $query поисковый запрос
+ * @param int $limit количество лотов на странице
+ * @param int $offset смещение для пагинации
+ *
+ * @return array Ассоциативный массив
+ */
+function getLotsBySearch(mysqli $conn, string $query, int $limit, int $offset): array
+{
+    $sql = "SELECT l.id,
+                   l.title AS lot_title,
+                   l.starting_price,
+                   l.image,
+                   c.title AS category_title,
+                   l.created_at,
+                   l.end_date
+            FROM lots l
+            JOIN categories c ON l.category_id = c.id
+            WHERE MATCH(l.title, l.description) AGAINST(? IN BOOLEAN MODE)
+              AND l.end_date > NOW()
+            ORDER BY l.created_at DESC
+            LIMIT ? OFFSET ?;";
+
+    $stmt = db_get_prepare_stmt($conn, $sql, [$query, $limit, $offset]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+
+    return mysqli_fetch_all($res, MYSQLI_ASSOC);
+}
+
+/**
+ * Возвращает количество лотов по поисковому запросу
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param string $query поисковый запрос
+ *
+ * @return int количество лотов
+ */
+function getLotsCountBySearch(mysqli $conn, string $query): int
+{
+    $sql = "SELECT COUNT(*) AS count
+            FROM lots
+            WHERE MATCH(title, description) AGAINST(? IN BOOLEAN MODE)
+              AND end_date > NOW();";
+
+    $stmt = db_get_prepare_stmt($conn, $sql, [$query]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+
+    return (int) mysqli_fetch_assoc($res)['count'];
 }

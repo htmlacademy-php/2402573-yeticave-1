@@ -183,7 +183,7 @@ function validateRequiredFields(array $form, array $fields): array
  * @param array $form массив полей формы
  *
  * @return void
-*/
+ */
 
 function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): void
 {
@@ -209,7 +209,7 @@ function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): vo
  * @param array $form массив полей формы
  *
  * @return void
-*/
+ */
 
 function renderSignUpPage(mysqli $conn, array $errors = [], array $form = []): void
 {
@@ -393,7 +393,7 @@ function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bids
  * @param string $date Дата в формате, распознаваемом strtotime()
  *
  * @return string Человекочитаемый формат времени, напр. "5 минут назад", "Вчера в 11:36" или "25.10.25 в 23:26"
-*/
+ */
 
 function countTimePosted(string $date): string
 {
@@ -429,7 +429,7 @@ function countTimePosted(string $date): string
  * @param array $bids Массив, в котором есть ключ 'end_date'
  *
  * @return bool true, если дата меньше текущей
-*/
+ */
 
 function isBidExpired(array $bids): bool
 {
@@ -447,7 +447,7 @@ function isBidExpired(array $bids): bool
  *
  */
 
-function renderAddLotForm(array $categories, array $lot = [], array $errors = [], string $userName = '') : void
+function renderAddLotForm(array $categories, array $lot = [], array $errors = [], string $userName = ''): void
 {
     $pageContent = include_template('add-lot.php', [
         'lot' => $lot,
@@ -466,3 +466,25 @@ function renderAddLotForm(array $categories, array $lot = [], array $errors = []
     exit();
 }
 
+/**
+ * Возвращает данные для пагинации
+ *
+ * @param int $totalItems общее количество элементов
+ * @param int $currentPage текущая страница
+ * @param int $itemsPerPage количество элементов на странице
+ *
+ * @return array ['limit' => int, 'offset' => int, 'pages_count' => int, 'current_page' => int]
+ */
+function getPagination(int $totalItems, int $currentPage, int $itemsPerPage = 9): array
+{
+    $pagesCount = ceil($totalItems / $itemsPerPage);
+    $currentPage = max(1, min($currentPage, $pagesCount));
+    $offset = ($currentPage - 1) * $itemsPerPage;
+
+    return [
+        'limit' => $itemsPerPage,
+        'offset' => $offset,
+        'pages_count' => $pagesCount,
+        'current_page' => $currentPage
+    ];
+}
