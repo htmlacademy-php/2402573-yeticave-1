@@ -33,6 +33,7 @@ $pageLayout = include_template('layout.php', [
     'title' => 'Главная',
     'userName' => 'Анастасия',
     'categories' => $categoriesFromDB,
+    'isPromo' => true
 ]);
 
 print $pageLayout;

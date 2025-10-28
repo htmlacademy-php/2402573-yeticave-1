@@ -1,18 +1,11 @@
-<nav class="nav">
-    <ul class="nav__list container">
-        <?php foreach ($categories as $item): ?>
-            <li class="nav__item <?php if ($item['id'] == $category['id']) echo 'nav__item--current'; ?>">
-                <a href="all-lots.php?id=<?= htmlspecialchars($item['id']) ?>">
-                    <?= htmlspecialchars($item['title']) ?>
-                </a>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-</nav>
 
 <div class="container">
     <section class="lots">
-        <h2>Все лоты в категории <span>«<?= htmlspecialchars($category['title']) ?>»</span></h2>
+        <?php if (!empty($search)): ?>
+    <h1>Результаты поиска по запросу «<?= htmlspecialchars($search) ?>»</h1>
+<?php else: ?>
+    <h2>Все лоты в категории <span>«<?= htmlspecialchars($category['title'] ?? 'Все') ?>»</span></h2>
+<?php endif; ?>
 
         <ul class="lots__list">
             <?php foreach ($lots as $lot): ?>
@@ -44,7 +37,6 @@
             <?php endforeach; ?>
         </ul>
     </section>
-
     <?php if ($pagesCount > 1): ?>
         <ul class="pagination-list">
             <?php for ($i = 1; $i <= $pagesCount; $i++): ?>
