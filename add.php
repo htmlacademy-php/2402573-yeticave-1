@@ -37,7 +37,7 @@ $validators = [
     'lot-rate' => 'validatePrice',
     'lot-step' => 'validateStep',
     'lot-date' => 'validateDate',
-    'category' => function($value) use ($categoriesIds) {
+    'category' => function ($value) use ($categoriesIds) {
         return validateCategory((int)$value, $categoriesIds);
     }
 ];

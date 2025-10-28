@@ -1,14 +1,14 @@
 
 <div class="container">
     <section class="lots">
-        <?php if (!empty($search)): ?>
+        <?php if (!empty($search)) : ?>
     <h1>Результаты поиска по запросу «<?= htmlspecialchars($search) ?>»</h1>
-<?php else: ?>
+        <?php else : ?>
     <h2>Все лоты в категории <span>«<?= htmlspecialchars($category['title'] ?? 'Все') ?>»</span></h2>
-<?php endif; ?>
+        <?php endif; ?>
 
         <ul class="lots__list">
-            <?php foreach ($lots as $lot): ?>
+            <?php foreach ($lots as $lot) : ?>
                 <li class="lots__item lot">
                     <div class="lot__image">
                         <a href="lot.php?id=<?= $lot['id'] ?>">
@@ -28,7 +28,9 @@
                                 <span class="lot__cost"><?= formatThePrice($lot['starting_price']) ?></span>
                             </div>
                             <?php $time = getDtRange($lot['end_date'] ?? date('Y-m-d H:i:s')); ?>
-                            <div class="lot__timer timer<?php if ($time[0] < 1) echo ' timer--finishing'; ?>">
+                            <div class="lot__timer timer<?php if ($time[0] < 1) {
+                                echo ' timer--finishing';
+                                                        } ?>">
                                 <?= str_pad($time[0], 2, '0', STR_PAD_LEFT) . ':' . str_pad($time[1], 2, '0', STR_PAD_LEFT) ?>
                             </div>
                         </div>
@@ -37,10 +39,12 @@
             <?php endforeach; ?>
         </ul>
     </section>
-    <?php if ($pagesCount > 1): ?>
+    <?php if ($pagesCount > 1) : ?>
         <ul class="pagination-list">
-            <?php for ($i = 1; $i <= $pagesCount; $i++): ?>
-                <li class="pagination-item <?php if ($i === $currentPage) echo 'pagination-item--active'; ?>">
+            <?php for ($i = 1; $i <= $pagesCount; $i++) : ?>
+                <li class="pagination-item <?php if ($i === $currentPage) {
+                    echo 'pagination-item--active';
+                                           } ?>">
                     <a href="?id=<?= $category['id'] ?>&page=<?= $i ?>"><?= $i ?></a>
                 </li>
             <?php endfor; ?>

@@ -544,7 +544,8 @@ function getLotsCountBySearch(mysqli $conn, string $query): int
  * @param int $lotId ID лота
  * @return bool true, если пользователь уже сделал ставку, иначе false
  */
-function hasUserBidOnLot(mysqli $conn, int $userId, int $lotId): bool {
+function hasUserBidOnLot(mysqli $conn, int $userId, int $lotId): bool
+{
     $sql = 'SELECT 1 FROM bids WHERE user_id = ? AND lot_id = ? LIMIT 1';
     $stmt = db_get_prepare_stmt($conn, $sql, [$userId, $lotId]);
     mysqli_stmt_execute($stmt);

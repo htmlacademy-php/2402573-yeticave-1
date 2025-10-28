@@ -17,7 +17,9 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
         <div class="lot-item__right">
             <div class="lot-item__state">
                 <?php $time = getDtRange($lot['end_date']); ?>
-                <div class="lot__timer timer<?php if ($time[0] < 1): ?> timer--finishing<?php endif; ?>">
+                <div class="lot__timer timer<?php if ($time[0] < 1) :
+                    ?> timer--finishing<?php
+                                            endif; ?>">
                     <?= str_pad($time[0], 2, '0', STR_PAD_LEFT) . ': ' . str_pad($time[1], 2, '0', STR_PAD_LEFT) ?>
                 </div>
                 <div class="lot-item__cost-state">
@@ -30,8 +32,8 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
                     </div>
                 </div>
             </div>
-            <?php if ($isFormVisible): ?>
-                <?php if (isset($_SESSION['user'])): ?>
+            <?php if ($isFormVisible) : ?>
+                <?php if (isset($_SESSION['user'])) : ?>
                     <?php $classForm = !empty($errors) ? ' form--invalid' : ''; ?>
                     <form class="lot-item__form<?= $classForm ?>" action="add-bet.php" method="post" autocomplete="off">
                         <input type="hidden" name="lot_id" value="<?= htmlspecialchars($lot['id']) ?>">
@@ -52,7 +54,7 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
                 <?php $bidsHistory = $bidsHistory ?? []; ?>
                 <h3>История ставок (<span><?= count($bidsHistory) ?></span>)</h3>
                 <table class="history__list">
-                    <?php foreach ($bidsHistory as $bid): ?>
+                    <?php foreach ($bidsHistory as $bid) : ?>
                         <tr class="history__item">
                             <td class="history__name"><?= htmlspecialchars($bid['user_name']) ?></td>
                             <td class="history__price"><?= formatThePrice($bid['amount']) ?></td>

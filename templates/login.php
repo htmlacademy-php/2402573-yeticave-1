@@ -16,7 +16,7 @@
             <input id="password" type="password" name="password" placeholder="Введите пароль">
             <span class="form__error"><span class="form__error"><?= $errors['password'] ?? '' ?></span></span>
         </div>
-        <?php if (!empty($errors)): ?>
+        <?php if (!empty($errors)) : ?>
             <span class="form__error form__error--bottom">Пожалуйста, исправьте ошибки в форме.</span>
         <?php endif; ?>
       <button type="submit" class="button">Войти</button>
