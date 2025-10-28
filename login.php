@@ -35,9 +35,9 @@ if (!empty($errors)) {
 $user = getUserByEmail($form['email'], $conn);
 
 if (!$user) {
-    $errors['email'] = 'Такой пользователь не найден';
+    $errors['email'] = 'Неверный логин или email';
 } elseif (!password_verify($form['password'], $user['password'])) {
-    $errors['password'] = 'Вы ввели неверный пароль';
+    $errors['password'] = 'Неверный логин или email';
 }
 
 // Если есть ошибки после попытки входа, выводим их с формой
@@ -45,7 +45,7 @@ if (!empty($errors)) {
     renderLoginPage($conn, $errors, $form);
 }
 
-// Успешный вход и редирект на главную 
+// Успешный вход и редирект на главную
 $_SESSION['user'] = [
     'id' => $user['id'],
     'name' => $user['name'],

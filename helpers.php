@@ -362,18 +362,33 @@ function include_template($name, array $data = [])
  * @return void
  */
 
-function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bidsHistory = []): void
+function renderBidForm(mysqli $conn, array $lot, array $errors = [], array $bidsHistory = [],
+                        $costValue = '', $isFormVisible = null): void
 {
     $categories = getCategories($conn);
 
     // текущая цена для отображения
     $currentPrice = getLotCurrentPrice($conn, $lot['id']);
 
+    $isLotExpired = isBidExpired($lot);
+    $currentPrice = getLotCurrentPrice($conn, $lot['id']);
+    $minBid = $currentPrice + $lot['bidding_step'];
+    $userId = (int)($_SESSION['user']['id'] ?? 0);
+
+    if ($isFormVisible === null) {
+        $isFormVisible = isset($_SESSION['user'])
+            && !$isLotExpired
+            && $userId !== (int)$lot['author_id']
+            && !hasUserBidOnLot($conn, $userId, $lot['id']);
+    }
+
     $pageContent = include_template('lot.php', [
         'lot' => $lot,
         'errors' => $errors,
         'bidsHistory' => $bidsHistory,
-        'currentPrice' => $currentPrice
+        'currentPrice' => $currentPrice,
+        'isFormVisible' => $isFormVisible,
+        'costValue' => $costValue
     ]);
 
     $pageLayout = include_template('layout.php', [

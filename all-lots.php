@@ -32,17 +32,21 @@ $totalLots = getLotsCountByCategory($conn, (int)$categoryId);
 $pagesCount = ceil($totalLots / $limit);
 
 $pageContent = include_template('all-lots.php', [
-    'category' => $category,
-    'categories' => $categoriesFromDB,
     'lots' => $lots,
-    'pagesCount' => $pagesCount,
-    'currentPage' => $page
+    'categories' => $categoriesFromDB,
+    'currentPage' => $currentPage,
+    'pagesCount' => $totalPages ?? $pagesCount ?? 1,
+    'search' => $search ?? null,
+    'currentCategoryId' => $category['id'] ?? null,
+    'category' => $category ?? null
 ]);
 
 $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
-    'title' => 'Все лоты в категории ' . $category['title'],
-    'userName' => $_SESSION['user']['name'] ?? ''
-]);
+    'title' => 'Результаты поиска',
+    'userName' => $_SESSION['user']['name'] ?? '',
+    'categories' => $categoriesFromDB,
+    'search' => $search,
 
+]);
 print $pageLayout;
