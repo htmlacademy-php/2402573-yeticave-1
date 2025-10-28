@@ -63,6 +63,25 @@ function getCategories(mysqli $conn): array
 }
 
 /**
+ * Возвращает массив активных лотов из БД
+ *
+ * @param mysqli $conn объект соединения с БД
+ *
+ * @return array Ассоциативный массив лотов
+ */
+function getLots(mysqli $conn): array
+{
+    $sql = 'SELECT l.id, l.title AS lot_title, l.starting_price, l.image, l.end_date, c.title AS category_title FROM lots l
+                        JOIN categories c ON l.category_id = c.id
+                        WHERE l.end_date > NOW()
+                    ORDER BY l.created_at DESC
+                    LIMIT 9;';
+    $res = getQuery($conn, $sql);
+
+    return mysqli_fetch_all($res, MYSQLI_ASSOC);
+}
+
+/**
  * Возвращает категорию
  *
  * @param mysqli $conn объект соединения с БД
@@ -477,11 +496,14 @@ function getLotsBySearch(mysqli $conn, string $query, int $limit, int $offset): 
                    l.image,
                    c.title AS category_title,
                    l.created_at,
-                   l.end_date
+                   l.end_date,
+                   COUNT(b.id) AS bets_count
             FROM lots l
             JOIN categories c ON l.category_id = c.id
-            WHERE MATCH(l.title, l.description) AGAINST(? IN BOOLEAN MODE)
+            LEFT JOIN bids b ON b.lot_id = l.id
+            WHERE MATCH(l.title, l.description) AGAINST(?)
               AND l.end_date > NOW()
+            GROUP BY l.id
             ORDER BY l.created_at DESC
             LIMIT ? OFFSET ?;";
 
@@ -512,4 +534,21 @@ function getLotsCountBySearch(mysqli $conn, string $query): int
     $res = mysqli_stmt_get_result($stmt);
 
     return (int) mysqli_fetch_assoc($res)['count'];
+}
+
+/**
+ * Проверяет, делал ли пользователь хотя бы одну ставку на конкретный лот.
+ *
+ * @param mysqli $conn подключение к базе данных
+ * @param int $userId ID пользователя
+ * @param int $lotId ID лота
+ * @return bool true, если пользователь уже сделал ставку, иначе false
+ */
+function hasUserBidOnLot(mysqli $conn, int $userId, int $lotId): bool {
+    $sql = 'SELECT 1 FROM bids WHERE user_id = ? AND lot_id = ? LIMIT 1';
+    $stmt = db_get_prepare_stmt($conn, $sql, [$userId, $lotId]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    return (bool)mysqli_fetch_assoc($result);
 }

@@ -1,3 +1,4 @@
+    <section class="lots">
     <div class="lots__header">
         <h2>Открытые лоты</h2>
     </div>
