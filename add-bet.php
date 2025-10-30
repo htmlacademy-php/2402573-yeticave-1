@@ -41,7 +41,8 @@ if ($costRaw === '') {
 
 if (!empty($errors)) {
     $bidsHistory = getBidsByLot($conn, $lotId);
-    renderBidForm($conn, $lot, $errors, $bidsHistory);
+    $costValue = $_POST['cost'] ?? '';
+    renderBidForm($conn, $lot, $errors, $bidsHistory, $costValue);
     exit();
 }
 
@@ -52,7 +53,9 @@ $bidsHistory = getBidsByLot($conn, $lotId);
 
 if (!$addedBid) {
     $errors['general'] = 'Ошибка сохранения ставки. Попробуйте ещё раз.';
-    renderBidForm($conn, $lot, $errors, $bidsHistory);
+    $isFormVisible = true;
+    renderBidForm($conn, $lot, $errors, $bidsHistory, $costValue, $isFormVisible);
+
     exit();
 }
 

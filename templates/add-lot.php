@@ -13,7 +13,7 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
             <label for="category">Категория <sup>*</sup></label>
             <select id="category" name="category">
                 <option value="" required>Выберите категорию</option>
-                <?php foreach ($categories as $item): ?>
+                <?php foreach ($categories as $item) : ?>
                     <option value=<?= htmlspecialchars($item['id']) ?> <?= (isset($lot['category']) && $lot['category'] == $item['id']) ? 'selected' : '' ?>>
                         <?= htmlspecialchars($item['title']) ?>
                     </option>
@@ -54,7 +54,7 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
             <span class="form__error"><?= $errors['lot-date'] ?? '' ?></span>
         </div>
     </div>
-    <?php if (!empty($errors)): ?>
+    <?php if (!empty($errors)) : ?>
         <span class="form__error form__error--bottom">Пожалуйста, исправьте ошибки в форме.</span>
     <?php endif; ?>
     <button type="submit" class="button">Добавить лот</button>

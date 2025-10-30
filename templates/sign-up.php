@@ -27,7 +27,7 @@
             <textarea id="message" name="message" placeholder="Напишите как с вами связаться"><?= htmlspecialchars($form['message'] ?? '') ?></textarea>
             <span class="form__error"><?= $errors['message'] ?? '' ?></span>
         </div>
-        <?php if (!empty($errors)): ?>
+        <?php if (!empty($errors)) : ?>
             <span class="form__error form__error--bottom">Пожалуйста, исправьте ошибки в форме.</span>
         <?php endif; ?>
         <button type="submit" class="button">Зарегистрироваться</button>

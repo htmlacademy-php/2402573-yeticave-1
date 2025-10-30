@@ -1,0 +1,17 @@
+{
+    "name": "anastasiia/2402573-yeticave-1",
+    "description": "internet-auction for winter sports equipment",
+    "autoload": {
+        "psr-4": {
+            "Anastasiia\\2402573Yeticave1\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Anastasiia"
+        }
+    ],
+    "require": {
+        "symfony/mailer": "^6.4"
+    }
+}
