@@ -25,7 +25,8 @@ $pageContent = include_template('main.php', [
 $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Главная',
-    'userName' => 'Анастасия',
+    'userName' => $userName,
+    'isAuth' => $isAuth,
     'categories' => $categoriesFromDB,
     'isPromo' => true
 ]);
