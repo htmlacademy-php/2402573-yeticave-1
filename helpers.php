@@ -14,16 +14,15 @@
  *
  * @return bool true при совпадении с форматом 'ГГГГ-ММ-ДД', иначе false
  */
+
 // данная функция написана до работы студентов с проектом сторонним разработчиком
 // в моем окружении FatalError не возникало
-function is_date_valid(mixed $date): bool
+function is_date_valid(string $date): bool
 {
-    if (!is_string($date)) return false;
+    $format_to_check = 'Y-m-d';
+    $dateTimeObj = date_create_from_format($format_to_check, $date);
 
-    $dateTimeObj = date_create_from_format('Y-m-d', $date);
-    $errors = date_get_last_errors();
-    $totalErrors = is_array($errors) ? array_sum($errors) : 1;
-    return $dateTimeObj !== false && $totalErrors === 0;
+    return $dateTimeObj !== false && array_sum(date_get_last_errors() ?: []) === 0;
 }
 
 /**
