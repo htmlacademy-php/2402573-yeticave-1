@@ -357,6 +357,33 @@ function getBidsByLot(mysqli $conn, int $lotId): array
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
+/**
+ * Возвращает последнюю (максимальную) ставку на лот
+ *
+ * @param mysqli $conn объект соединения с БД
+ * @param int $lotId id лота
+ *
+ * @return array Ассоциативный массив последней ставки или false, если ставок нет
+ *
+ */
+function getLotsLastBid(mysqli $conn, int $lotId): array|false
+{
+    $sql = 'SELECT b.*, u.email, u.name FROM bids b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.lot_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1;';
+    $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
+    if (!mysqli_stmt_execute($stmt)) {
+        return false;
+    }
+    $result = mysqli_stmt_get_result($stmt);
+    if (!$result) {
+        return false;
+    }
+    $row = mysqli_fetch_assoc($result);
+    return $row ?: false;
+}
 
 /**
  * Возвращает лоты, у которых нет победителя и не истек срок торгов
