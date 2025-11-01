@@ -9,10 +9,10 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
     <div class="lot-item__content">
         <div class="lot-item__left">
             <div class="lot-item__image">
-                <a href="lot.php?id=<?= $lot['id'] ?>"><img src="<?= htmlspecialchars($lot['image']) ?>" width="730" height="548" alt="<?= htmlspecialchars($lot['title']) ?>"></a>
+                <a href="lot.php?id=<?= $lot['id'] ?>"><img src="<?= htmlspecialchars($lot['image'] ?? '') ?>" width="730" height="548" alt="<?= htmlspecialchars($lot['title'] ?? '')?>"></a>
             </div>
             <p class="lot-item__category">Категория: <span><?= htmlspecialchars($lot['category_title']) ?></span></p>
-            <p class="lot-item__description"><?= htmlspecialchars($lot['description']) ?></p>
+            <p class="lot-item__description"><?= htmlspecialchars($lot['description'] ?? '') ?></p>
         </div>
         <div class="lot-item__right">
             <div class="lot-item__state">
@@ -41,7 +41,7 @@ $classInvalid = !empty($errors) ? ' form--invalid' : '';
                         <p class="lot-item__form-item form__item<?= $classInput ?>">
                             <label for="cost">Ваша ставка</label>
                             <input id="cost" type="number" name="cost"
-                                placeholder="<?= htmlspecialchars($currentPrice) ?>"
+                                placeholder="<?= htmlspecialchars($minBid) ?>"
                                 value="<?= htmlspecialchars($costValue ?? '') ?>">
                             <span class="form__error"><?= $errors['cost'] ?? '' ?></span>
                         </p>
