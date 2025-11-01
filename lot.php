@@ -1,12 +1,6 @@
 <?php
 
-session_start();
-
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
+require_once 'init.php';
 
 $lotId  = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
@@ -24,10 +18,17 @@ $lastBid = $bidsHistory[0] ?? null;
 
 $isLotExpired = isBidExpired($lot);
 
-$currentPrice = getLotCurrentPrice($conn, $lot['id']);
-$minBid = $currentPrice + $lot['bidding_step'];
+$priceInfo = getLotPriceInfo($conn, $lot['id']);
+$currentPrice = $priceInfo['currentPrice'];
+$biddingStep = $priceInfo['biddingStep'];
 
-$userId = (int)$_SESSION['user']['id'];
+if ($biddingStep === null) {
+    $biddingStep = max(1, round($currentPrice * 0.05));
+}
+
+$minBid = $currentPrice + $biddingStep;
+
+$userId = (int)($_SESSION['user']['id'] ?? 0);
 
 $isFormVisible = isset($_SESSION['user'])
     && !$isLotExpired
@@ -40,12 +41,15 @@ $singleLot = include_template('lot.php', [
     'currentPrice' => $currentPrice,
     'minBid' => $minBid,
     'isFormVisible' => $isFormVisible,
+    'biddingStep' => $biddingStep
 ]);
 
 $lotContent = include_template('layout.php', [
     'pageContent' => $singleLot,
     'title' => $lot['lot_title'],
-    'categories' => $categoriesFromDB
+    'categories' => $categoriesFromDB,
+    'isAuth' => $isAuth,
+    'userName' => $userName
 ]);
 
 print $lotContent;

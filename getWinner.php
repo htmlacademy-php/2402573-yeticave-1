@@ -1,5 +1,4 @@
 <?php
-
 $db = require('./config.php');
 require_once('./helpers.php');
 require_once('./db.php');
@@ -14,7 +13,7 @@ $conn = connectDB($db['db']);
 $lots = getCurrentNonWinningLots($conn);
 
 if (!$lots) {
-    exit();
+    return;
 }
 
 $dsn = 'smtp://helene.reynolds70%40ethereal.email:ENJZp6gxT8dyAEHdwM@smtp.ethereal.email:587?encryption=tls&auth_mode=login';

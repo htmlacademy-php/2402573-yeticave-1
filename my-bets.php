@@ -1,20 +1,13 @@
 <?php
 
-session_start();
-
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
+require_once 'init.php';
 
 if (!isset($_SESSION['user'])) {
     header("Location: /login.php");
     exit('Необходимо войти');
 }
 
-$userId = $_SESSION['user']['id'];
-
+$userId = (int)$_SESSION['user']['id'];
 $bids = getUserBids($conn, $userId);
 
 foreach ($bids as $key => $bid) {
@@ -38,7 +31,8 @@ $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Мои ставки',
     'categories' => getCategories($conn),
-    'username' => $_SESSION['user']['name'],
+    'userName' => $userName,
+    'isAuth' => $isAuth
 ]);
 
 print $pageLayout;

@@ -1,12 +1,10 @@
 <?php
 
-session_start();
+require_once 'init.php';
 
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
 
-$conn = connectDB($db['db']);
+$errors = [];
+$form = [];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     // если пользователь уже зашел, загружаем главную страницу
@@ -15,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         exit();
     }
     // если нет, то загружаем форму входа на сайт
-    renderLoginPage($conn);
+    renderLoginPage($conn, $isAuth, $errors, $form);
 }
 
 $form = $_POST;
@@ -30,7 +28,7 @@ if (!isset($errors['email']) && !filter_var($form['email'], FILTER_VALIDATE_EMAI
 
 // если есть ошибки, грузим форму с сообщениями о них
 if (!empty($errors)) {
-    renderLoginPage($conn, $errors, $form);
+    renderLoginPage($conn, $isAuth, $errors, $form);
 }
 
 $user = getUserByEmail($form['email'], $conn);
@@ -43,7 +41,7 @@ if (!$user) {
 
 // Если есть ошибки после попытки входа, выводим их с формой
 if (!empty($errors)) {
-    renderLoginPage($conn, $errors, $form);
+    renderLoginPage($conn, $isAuth, $errors, $form);
 }
 
 // Успешный вход и редирект на главную

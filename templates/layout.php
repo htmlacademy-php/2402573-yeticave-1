@@ -1,10 +1,3 @@
-<?php
-session_start();
-
-$isAuth = isset($_SESSION['user']);
-$userName = $isAuth ? htmlspecialchars($_SESSION['user']['name']) : '';
-?>
-
 <!DOCTYPE html>
 <html lang="ru">
 
