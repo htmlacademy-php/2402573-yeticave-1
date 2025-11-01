@@ -1,23 +1,17 @@
 <?php
-
-session_start();
+require_once 'init.php';
 
 if (!isset($_SESSION['user'])) {
     http_response_code(403);
     die('Доступ запрещён. Только для зарегистрированных пользователей.');
 }
 
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
 
 $categoriesFromDB = getCategories($conn);
 $categoriesIds = array_column($categoriesFromDB, 'id');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    renderAddLotForm($categoriesFromDB, [], [], $_SESSION['user']['name'] ?? '');
+    renderAddLotForm($categoriesFromDB ?? [], $isAuth, [], [], $userName ?? '');
 }
 
 $lotForm = $_POST;
@@ -90,7 +84,13 @@ if (empty($_FILES['image']['tmp_name'])) {
 }
 
 if (!empty($errors)) {
-    renderAddLotForm($categoriesFromDB, $lotForm, $errors, $_SESSION['user']['name'] ?? '');
+    renderAddLotForm(
+        $categoriesFromDB ?? [],
+        $isAuth,
+        $lotForm ?? [],
+        $errors ?? [],
+        $userName ?? '',
+    );
 }
 
 $authorId = (int)($_SESSION['user']['id'] ?? 0);
@@ -98,7 +98,13 @@ $newLotId = addNewLot($conn, $authorId, $lotForm);
 
 if ($newLotId === false) {
     $errors['db'] = 'Ошибка при сохранении лота. Попробуйте позже.';
-    renderAddLotForm($categoriesFromDB, $lotForm, $errors, $_SESSION['user']['name'] ?? '');
+    renderAddLotForm(
+        $categoriesFromDB ?? [],
+        $isAuth,
+        $lotForm ?? [],
+        $errors ?? [],
+        $userName ?? '',
+    );
 }
 
 header('Location: lot.php?id=' . $newLotId);

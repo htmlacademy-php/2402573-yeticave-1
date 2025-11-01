@@ -1,12 +1,6 @@
 <?php
 
-session_start();
-
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
+require_once 'init.php';
 
 $categoryId = $_GET['id'] ?? null;
 
@@ -35,7 +29,7 @@ $pagesCount = ceil($totalLots / $limit);
 $pageContent = include_template('all-lots.php', [
     'lots' => $lots,
     'categories' => $categoriesFromDB,
-    'currentPage' => $currentPage,
+    'currentPage' => $page,
     'pagesCount' => $totalPages ?? $pagesCount ?? 1,
     'search' => $search ?? null,
     'currentCategoryId' => $category['id'] ?? null,
@@ -45,9 +39,10 @@ $pageContent = include_template('all-lots.php', [
 $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Результаты поиска',
-    'userName' => $_SESSION['user']['name'] ?? '',
+    'userName' => $userName,
     'categories' => $categoriesFromDB,
-    'search' => $search,
+    'search' => null,
+    'isAuth' => $isAuth
 
 ]);
 print $pageLayout;

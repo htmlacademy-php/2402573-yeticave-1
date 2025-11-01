@@ -1,10 +1,6 @@
 <?php
 
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
+require_once 'init.php';
 
 $categoriesFromDB = getCategories($conn);
 
@@ -15,28 +11,27 @@ $lotsPerPage = 9;
 $lots = [];
 $totalPages = 0;
 
-
 if ($search) {
     $totalLots = getLotsCountBySearch($conn, $search);
     $pagination = getPagination($totalLots, $currentPage, $lotsPerPage);
 
     $lots = getLotsBySearch($conn, $search, $pagination['limit'], $pagination['offset']);
-    $totalPages = $pagination['pagesCount'];
+    $pagesCount = $pagination['pagesCount'] ?? 1;
 }
-
 
 $pageContent = include_template('all-lots.php', [
     'lots' => $lots,
     'categories' => $categoriesFromDB,
     'currentPage' => $currentPage,
-    'totalPages' => $totalPages,
+    'pagesCount' => $totalPages ?? 1,
     'search' => $search
 ]);
 
 $pageLayout = include_template('layout.php', [
     'pageContent' => $pageContent,
     'title' => 'Результаты поиска',
-    'userName' => $_SESSION['user']['name'] ?? '',
+    'userName' => $userName,
+    'isAuth' => $isAuth,
     'categories' => $categoriesFromDB,
     'simpleCategoriesMenu' => true
 ]);

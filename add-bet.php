@@ -1,12 +1,6 @@
 <?php
 
-session_start();
-
-$db = require('./config.php');
-require_once('./helpers.php');
-require_once('./db.php');
-
-$conn = connectDB($db['db']);
+require_once 'init.php';
 
 if (!isset($_SESSION['user'])) {
     header("Location: /login.php");

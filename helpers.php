@@ -14,13 +14,16 @@
  *
  * @return bool true при совпадении с форматом 'ГГГГ-ММ-ДД', иначе false
  */
-
-function is_date_valid(string $date): bool
+// данная функция написана до работы студентов с проектом сторонним разработчиком
+// в моем окружении FatalError не возникало
+function is_date_valid(mixed $date): bool
 {
-    $format_to_check = 'Y-m-d';
-    $dateTimeObj = date_create_from_format($format_to_check, $date);
+    if (!is_string($date)) return false;
 
-    return $dateTimeObj !== false && array_sum(date_get_last_errors()) === 0;
+    $dateTimeObj = date_create_from_format('Y-m-d', $date);
+    $errors = date_get_last_errors();
+    $totalErrors = is_array($errors) ? array_sum($errors) : 1;
+    return $dateTimeObj !== false && $totalErrors === 0;
 }
 
 /**
@@ -179,13 +182,14 @@ function validateRequiredFields(array $form, array $fields): array
  * с переданными параметрами
  *
  * @param mysqli $conn соединение с БД
+ * @param bool $isAuth авторизован ли пользователь
  * @param array $errors массив с ошибками, по умолчанию пустой
  * @param array $form массив полей формы
  *
  * @return void
  */
 
-function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): void
+function renderLoginPage(mysqli $conn,  bool $isAuth, array $errors = [], array $form = []): void
 {
     $categoriesFromDB = getCategories($conn);
     $pageContent = include_template('login.php', [
@@ -195,7 +199,8 @@ function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): vo
     $layoutContent = include_template('layout.php', [
         'pageContent' => $pageContent,
         'categories' => $categoriesFromDB,
-        'title' => 'Вход на сайт'
+        'title' => 'Вход на сайт',
+        'isAuth' => $isAuth
     ]);
     print($layoutContent);
     exit();
@@ -207,11 +212,12 @@ function renderLoginPage(mysqli $conn, array $errors = [], array $form = []): vo
  * @param mysqli $conn соединение с БД
  * @param array $errors массив с ошибками, по умолчанию пустой
  * @param array $form массив полей формы
+ * @param bool $isAuth авторизован ли пользователь
  *
  * @return void
  */
 
-function renderSignUpPage(mysqli $conn, array $errors = [], array $form = []): void
+function renderSignUpPage(mysqli $conn, array $errors = [], array $form = [], bool $isAuth = false): void
 {
     $categoriesFromDB = getCategories($conn);
     $pageContent = include_template('sign-up.php', [
@@ -221,7 +227,8 @@ function renderSignUpPage(mysqli $conn, array $errors = [], array $form = []): v
     $layoutContent = include_template('layout.php', [
         'pageContent' => $pageContent,
         'categories' => $categoriesFromDB,
-        'title' => 'Регистрация'
+        'title' => 'Регистрация',
+        'isAuth' => $isAuth
     ]);
     print($layoutContent);
     exit();
@@ -368,44 +375,49 @@ function renderBidForm(
     array $errors = [],
     array $bidsHistory = [],
     $costValue = '',
-    $isFormVisible = null
+    ?bool $isFormVisible = null
 ): void {
     $categories = getCategories($conn);
 
-    // текущая цена для отображения
-    $currentPrice = getLotCurrentPrice($conn, $lot['id']);
+    $priceInfo = getLotPriceInfo($conn, $lot['id']);
+    $currentPrice = (int)($priceInfo['currentPrice'] ?? 0);
+    $biddingStep  = (int)($priceInfo['biddingStep'] ?? 0);
+    if ($biddingStep === 0) {
+        $biddingStep = max(1, round($currentPrice * 0.05));
+    }
+    $minBid = $currentPrice + $biddingStep;
 
-    $isLotExpired = isBidExpired($lot);
-    $currentPrice = getLotCurrentPrice($conn, $lot['id']);
-    $minBid = $currentPrice + $lot['bidding_step'];
     $userId = (int)($_SESSION['user']['id'] ?? 0);
 
     if ($isFormVisible === null) {
         $isFormVisible = isset($_SESSION['user'])
-            && !$isLotExpired
+            && !isBidExpired($lot)
             && $userId !== (int)$lot['author_id']
             && !hasUserBidOnLot($conn, $userId, $lot['id']);
     }
 
-    $pageContent = include_template('lot.php', [
+    $singleLot = include_template('lot.php', [
         'lot' => $lot,
-        'errors' => $errors,
         'bidsHistory' => $bidsHistory,
         'currentPrice' => $currentPrice,
-        'isFormVisible' => $isFormVisible,
-        'costValue' => $costValue
+        'minBid' => $minBid,
+        'errors' => $errors,
+        'costValue' => $costValue,
+        'isFormVisible' => $isFormVisible
     ]);
 
-    $pageLayout = include_template('layout.php', [
-        'pageContent' => $pageContent,
+    $lotContent = include_template('layout.php', [
+        'pageContent' => $singleLot,
         'title' => $lot['lot_title'],
         'categories' => $categories,
+        'isAuth' => $_SESSION['user']['id'] ?? false,
         'userName' => $_SESSION['user']['name'] ?? ''
     ]);
 
-    print $pageLayout;
+    print $lotContent;
     exit();
 }
+
 
 /**
  * Возвращает строку, описывающую, сколько времени прошло с указанной даты
@@ -460,6 +472,7 @@ function isBidExpired(array $bids): bool
  *  Отрисовывает страницу с формой добавления нового лота
  *
  * @param array $categories
+ * @param bool $isAuth
  * @param array $lot
  * @param array $errors
  * @param string $userName
@@ -467,7 +480,7 @@ function isBidExpired(array $bids): bool
  *
  */
 
-function renderAddLotForm(array $categories, array $lot = [], array $errors = [], string $userName = ''): void
+function renderAddLotForm(array $categories, bool $isAuth, array $lot = [], array $errors = [], string $userName = ''): void
 {
     $pageContent = include_template('add-lot.php', [
         'lot' => $lot,
@@ -479,7 +492,8 @@ function renderAddLotForm(array $categories, array $lot = [], array $errors = []
         'pageContent' => $pageContent,
         'title' => 'Добавить лот',
         'userName' => $userName,
-        'categories' => $categories
+        'categories' => $categories,
+        'isAuth' => $isAuth
     ]);
 
     print $pageLayout;

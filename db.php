@@ -165,10 +165,11 @@ function getLotsCountByCategory(mysqli $conn, int $categoryId): int
  */
 function getLotById(mysqli $conn, $lotId): array|false
 {
-    $sql = 'SELECT l.id, l.title AS lot_title, l.starting_price, l.description, l.image, c.title AS category_title, l.end_date, c.symbol_code
+    $sql = 'SELECT l.id, l.title AS lot_title, l.starting_price, l.description, l.image, l.bidding_step, l.author_id,
+            c.title AS category_title, l.end_date, c.symbol_code
             FROM lots l
             JOIN categories c ON l.category_id = c.id
-            WHERE l.id = ?;';
+            WHERE l.id = ?';
 
     $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
     mysqli_stmt_execute($stmt);
@@ -356,27 +357,6 @@ function getBidsByLot(mysqli $conn, int $lotId): array
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
 
-/**
- * Возвращает текущую цену лота для отображения на карточке лота
- * (максимальная ставка или стартовая цена, если ставок нет)
- */
-function getLotCurrentPrice(mysqli $conn, int $lotId): int
-{
-    // ищем максимальную ставку
-    $sql = 'SELECT MAX(amount) AS max_bid FROM bids WHERE lot_id = ?';
-    $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_assoc($res);
-
-    if ($row && $row['max_bid'] !== null) {
-        return (int)$row['max_bid'];
-    }
-
-    // если ставок нет, возвращаем стартовую цену
-    $lot = getLotById($conn, $lotId);
-    return (int)$lot['starting_price'];
-}
 
 /**
  * Возвращает лоты, у которых нет победителя и не истек срок торгов
@@ -395,34 +375,6 @@ function getCurrentNonWinningLots(mysqli $conn): array|false
     $result = mysqli_query($conn, $sql);
 
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
-}
-
-/**
- * Возвращает последнюю (максимальную) ставку на лот
- *
- * @param mysqli $conn объект соединения с БД
- * @param int $lotId id лота
- *
- * @return array Ассоциативный массив последней ставки или false, если ставок нет
- *
- */
-function getLotsLastBid(mysqli $conn, int $lotId): array|false
-{
-    $sql = 'SELECT b.*, u.email, u.name FROM bids b
-            JOIN users u ON b.user_id = u.id
-            WHERE b.lot_id = ?
-            ORDER BY created_at DESC
-            LIMIT 1;';
-    $stmt = db_get_prepare_stmt($conn, $sql, [$lotId]);
-    if (!mysqli_stmt_execute($stmt)) {
-        return false;
-    }
-    $result = mysqli_stmt_get_result($stmt);
-    if (!$result) {
-        return false;
-    }
-    $row = mysqli_fetch_assoc($result);
-    return $row ?: false;
 }
 
 /**
@@ -552,4 +504,49 @@ function hasUserBidOnLot(mysqli $conn, int $userId, int $lotId): bool
     $result = mysqli_stmt_get_result($stmt);
 
     return (bool)mysqli_fetch_assoc($result);
+}
+
+
+/**
+ * Возвращает массив с информацией о стоимости лота
+ *
+ * @param mysqli $conn подключение к базе данных
+ * @param int $lotId ID лота
+ *
+ * @return array ['currentPrice' => $currentPrice, текущая цена
+ * 'minBid' => $minBid, минимальная ставка
+ * 'biddingStep' => $biddingStep] шаг ставки
+ *
+ */
+function getLotPriceInfo(mysqli $conn, int $lotId): array
+{
+    // Получаем максимальную ставку
+    $sqlBid = 'SELECT MAX(amount) AS max_bid FROM bids WHERE lot_id = ?';
+    $stmt = db_get_prepare_stmt($conn, $sqlBid, [$lotId]);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $rowBid = mysqli_fetch_assoc($res);
+
+    $lot = getLotById($conn, $lotId);
+    $startingPrice = (int)$lot['starting_price'];
+
+    // проверяем шаг ставки до приведения к int
+    $biddingStep = $lot['bidding_step'];
+    if ($biddingStep === null) {
+        $biddingStep = max(1, round($startingPrice * 0.05));
+    } else {
+        $biddingStep = (int)$biddingStep;
+    }
+
+    // Текущая цена = макс ставка, если она есть, иначе стартовая
+    $currentPrice = $rowBid['max_bid'] !== null ? (int)$rowBid['max_bid'] : $startingPrice;
+
+    // Минимальная ставка = текущая цена + шаг
+    $minBid = $currentPrice + $biddingStep;
+
+    return [
+        'currentPrice' => $currentPrice,
+        'minBid' => $minBid,
+        'biddingStep' => $biddingStep,
+    ];
 }
